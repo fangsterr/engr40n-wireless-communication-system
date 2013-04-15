@@ -19,11 +19,15 @@ class Source:
             # Form the databits, from the filename
             if self.fname is not None:
                 if self.fname.endswith('.png') or self.fname.endswith('.PNG'):
-                    # Its an image
-                else:
-                    payload = text2bits(self, self.fname)
+                    payload = self.bits_from_image(self.fname)
                     databits = numpy.append(
-                        get_header(self, len(payload), 'text')
+                        self.get_header(len(payload), 'image'),
+                        payload
+                    )
+                else:
+                    payload = self.text2bits(self.fname)
+                    databits = numpy.append(
+                        self.get_header(len(payload), 'text'),
                         payload
                     )
             else:
