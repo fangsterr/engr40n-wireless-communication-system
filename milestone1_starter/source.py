@@ -23,7 +23,7 @@ class Source:
                 else:
                     payload = text2bits(self, self.fname)
                     databits = numpy.append(
-                        get_header(self, len(payload), 'text')
+                        get_header(self, len(payload), 'text'),
                         payload
                     )
             else:
@@ -67,12 +67,19 @@ class Source:
         # Given the payload length and the type of source
         # (image, text, monotone), form the header
 
+        # Add source
         if srctype is 'image':
             header_type = [1, 0]
-            header_length = []
-            header_length_str = numpy.binary_repr(payload_length, width=6)
-            for bit in header_length_str:
-                header_length.append(int(bit))
-            header = header_type + header_length
+        elif srctype is 'text':
+            header_type = [0, 1]
+        else:
+            header_type = [1, 1]
+
+        # Add length
+        header_length = []
+        header_length_str = numpy.binary_repr(payload_length, width=6)
+        for bit in header_length_str:
+            header_length.append(int(bit))
+        header = header_type + header_length
 
         return numpy.array(header)
