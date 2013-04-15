@@ -50,6 +50,8 @@ class Source:
                 else:
                     bits = numpy.append(bits, [1])
 
+        bits = bits.astype(int)
+
         return bits
 
     def bits_from_image(self, filename):
