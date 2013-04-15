@@ -27,6 +27,14 @@ class Sink:
         # If its a text, just print out the text
         
         # Return the received payload for comparison purposes
+
+        srctype, payload_length = self.read_header(recd_bits[:8])
+        rcd_payload = recd_bits[8:]
+        if srctype is 'text':
+            print self.bits2text(rcd_payload)
+        elif srctype is 'image':
+            self.image_from_bits(rcd_payload, 'rcd-image.png')
+
         return rcd_payload
 
     def bits2text(self, bits):
