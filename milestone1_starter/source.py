@@ -31,8 +31,11 @@ class Source:
                         payload
                     )
             else:
-                # Send monotone (the payload is all 1s for
-                # monotone bits)
+                payload = numpy.array([1,1,1,1,1,1])
+                databits = numpy.append(
+                    self.get_header(len(payload), 'monotone'),
+                    payload
+                )
             return payload, databits
 
     def text2bits(self, filename):
