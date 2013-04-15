@@ -28,8 +28,8 @@ class Sink:
 
         # Return the received payload for comparison purposes
 
-        srctype, payload_length = self.read_header(recd_bits[:8])
-        rcd_payload = recd_bits[8:]
+        srctype, payload_length = self.read_header(recd_bits[:16])
+        rcd_payload = recd_bits[16:(payload_length+16)]
         if srctype is 'text':
             print self.bits2text(rcd_payload)
         elif srctype is 'image':
@@ -43,13 +43,12 @@ class Sink:
         index = 0
         bit_string = ""
         for bit in numpy.nditer(bits):
-            if index % 8 == 0 and index != 0:
+            single_bit_string = '%d' % bit
+            bit_string += single_bit_string
+            if index % 8 == 7:
                 ascii = int(bit_string, 2)
                 text += chr(ascii)
                 bit_string = ""
-            else:
-                single_bit_string = '%d' % bit
-                bit_string += single_bit_string
             index += 1
 
         return text
@@ -57,14 +56,20 @@ class Sink:
     def image_from_bits(self, bits, filename):
         # Convert the received payload to an image and save it
         # No return value required .
-
-        # convert bits to pixel values
-        for bit in numpy.nditer(bits, op_flags=['readwrite']):
-            if bit[...] != 0:
-                bit[...] = 255
+        bitmap = []
+        index = 0
+        bit_string = ""
+        for bit in numpy.nditer(bits):
+            single_bit_string = '%d' % bit
+            bit_string += single_bit_string
+            if index % 8 == 7:
+                pixel = int(bit_string, 2)
+                bitmap.append(pixel)
+                bit_string = ""
+            index += 1
 
         img = Image.new('L', (32,32))
-        img.putdata(bits)
+        img.putdata(bitmap)
         img.save(filename)
 
     def read_header(self, header_bits):
@@ -72,8 +77,6 @@ class Sink:
         # and source type (compatible with get_header on source)
 
         print '\tRecd header: ', header_bits
-
-        header_bits = header_bits.tolist()
 
         # compute payload length
         payload = header_bits[2:]
@@ -92,11 +95,11 @@ class Sink:
 
         # find source type
         source = header_bits[:2]
-        if source[0] is 1 and source[1] is 0:
+        if source[0] == 1 and source[1] == 0:
             srctype = 'image'
-        elif source[0] is 0 and source[1] is 1:
+        elif source[0] == 0 and source[1] == 1:
             srctype = 'text'
-        elif source[0] is 1 and source[1] is 1:
+        elif source[0] == 1 and source[1] == 1:
             srctype = 'monotype'
         else:
             srctype = '???'

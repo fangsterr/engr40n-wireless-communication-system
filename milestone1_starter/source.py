@@ -16,27 +16,28 @@ class Source:
         print 'Source: '
 
     def process(self):
-            # Form the databits, from the filename
-            if self.fname is not None:
-                if self.fname.endswith('.png') or self.fname.endswith('.PNG'):
-                    payload = self.bits_from_image(self.fname)
-                    databits = numpy.append(
-                        self.get_header(len(payload), 'image'),
-                        payload
-                    )
-                else:
-                    payload = self.text2bits(self.fname)
-                    databits = numpy.append(
-                        self.get_header(len(payload), 'text'),
-                        payload
-                    )
-            else:
-                payload = numpy.array([1,1,1,1,1,1])
+        # Form the databits, from the filename
+        if self.fname is not None:
+            if self.fname.endswith('.png') or self.fname.endswith('.PNG'):
+                payload = self.bits_from_image(self.fname)
                 databits = numpy.append(
-                    self.get_header(len(payload), 'monotone'),
+                    self.get_header(len(payload), 'image'),
                     payload
                 )
-            return payload, databits
+            else:
+                payload = self.text2bits(self.fname)
+                databits = numpy.append(
+                    self.get_header(len(payload), 'text'),
+                    payload
+                )
+        else:
+            payload = numpy.array([1,1,1,1,1,1])
+            databits = numpy.append(
+                self.get_header(len(payload), 'monotone'),
+                payload
+            )
+
+        return payload, databits
 
     def text2bits(self, filename):
         # Given a text file, convert to bits
@@ -64,11 +65,19 @@ class Source:
     def bits_from_image(self, filename):
         img = Image.open(filename)
         img = img.convert('L')
-        bits = numpy.array(list(img.getdata()))  # read in as pixels, need to
+        data = numpy.array(list(img.getdata()))  # read in as pixels, need to
                                                  # convert to bits
-        for num in numpy.nditer(bits, op_flags=['readwrite']):
-            if num[...] != 0:
-                num[...] = 1
+
+        bits = numpy.array([])
+        for pixel in data:
+            bit_string = numpy.binary_repr(pixel, width=8)
+            for bit in bit_string:
+                if bit is '0':
+                    bits = numpy.append(bits, [0])
+                else:
+                    bits = numpy.append(bits, [1])
+
+        bits = bits.astype(int)
 
         return bits
 
@@ -86,7 +95,7 @@ class Source:
 
         # Add length
         header_length = []
-        header_length_str = numpy.binary_repr(payload_length, width=6)
+        header_length_str = numpy.binary_repr(payload_length, width=14)
         for bit in header_length_str:
             header_length.append(int(bit))
         header = header_type + header_length
