@@ -4,6 +4,7 @@ import Image
 from graphs import *
 import binascii
 import random
+import numpy
 
 
 class Sink:
@@ -32,10 +33,18 @@ class Sink:
         # Convert the received payload to text (string)
         return  text
 
-    def image_from_bits(self, bits,filename):
+    def image_from_bits(self, bits, filename):
         # Convert the received payload to an image and save it
         # No return value required .
-        pass 
+        
+        # convert bits to pixel values
+        for bit in numpy.nditer(bits, op_flags=['readwrite']):
+            if bit[...] != 0:
+                bit[...] = 255
+
+        img = Image.new('L', (32,32))
+        img.putdata(bits)
+        img.save(filename)
 
     def read_header(self, header_bits): 
         # Given the header bits, compute the payload length
