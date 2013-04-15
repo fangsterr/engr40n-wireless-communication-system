@@ -73,6 +73,7 @@ class Sink:
 
         print '\tRecd header: ', header_bits
 
+        header_bits = header_bits.tolist()
 
         # compute payload length
         payload = header_bits[2:]
