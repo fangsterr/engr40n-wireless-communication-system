@@ -5,7 +5,7 @@ from graphs import *
 import binascii
 import random
 import numpy
-
+import math
 
 class Sink:
     def __init__(self):
@@ -51,6 +51,33 @@ class Sink:
         # and source type (compatible with get_header on source)
  
         print '\tRecd header: ', header_bits
+
+        
+        # compute payload length
+        payload = header_bits[2:]
+        power = len(payload) - 1
+        index = 0
+        length = 0
+
+        while power >= 0:
+            length = length + math.pow(2, power) * payload[index]
+            index = index + 1
+            power = power - 1
+
+        payload_length = int(length)
         print '\tLength from header: ', payload_length
+        
+        
+        # find source type
+        source = header_bits[:2]
+        if source[0] is 1 and source[1] is 0:
+            srctype = 'image'
+        elif source[0] is 0 and source[1] is 1:
+            srctype = 'text'
+        elif source[0] is 1 and source[1] is 1:
+            srctype = 'monotype'
+        else:
+            srctype = '???'
+
         print '\tSource type: ', srctype
         return srctype, payload_length
