@@ -22,7 +22,10 @@ class Source:
                     # Its an image
                 else:
                     payload = text2bits(self, self.fname)
-                    databits = get_header(self, len(payload), 'text') + payload
+                    databits = numpy.append(
+                        get_header(self, len(payload), 'text')
+                        payload
+                    )
             else:
                 # Send monotone (the payload is all 1s for
                 # monotone bits)
@@ -71,5 +74,5 @@ class Source:
             for bit in header_length_str:
                 header_length.append(int(bit))
             header = header_type + header_length
-        
+
         return numpy.array(header)
