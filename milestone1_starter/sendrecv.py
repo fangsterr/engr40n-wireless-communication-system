@@ -97,38 +97,35 @@ if __name__ == '__main__':
     src_payload, databits = src.process()
 
     # instantiate and run the transmitter block
-# start comment
-#     xmitter = Transmitter(fc, opt.samplerate, opt.one, opt.spb, opt.silence)
-#     databits_with_preamble = xmitter.add_preamble(databits)
-#     samples = xmitter.bits_to_samples(databits_with_preamble)
-#     mod_samples = xmitter.modulate(samples)
+    xmitter = Transmitter(fc, opt.samplerate, opt.one, opt.spb, opt.silence)
+    databits_with_preamble = xmitter.add_preamble(databits)
+    samples = xmitter.bits_to_samples(databits_with_preamble)
+    mod_samples = xmitter.modulate(samples)
 
-# ####################################
-#     # create channel instance
-#     if opt.bypass:
-#         h = [float(x) for x in opt.h.split(' ')]
-#         channel = bch.BypassChannel(opt.noise, opt.lag, h)
-#     else:
-#         channel = ach.AudioChannel(opt.samplerate, opt.chunksize, opt.prefill)
+####################################
+    # create channel instance
+    if opt.bypass:
+        h = [float(x) for x in opt.h.split(' ')]
+        channel = bch.BypassChannel(opt.noise, opt.lag, h)
+    else:
+        channel = ach.AudioChannel(opt.samplerate, opt.chunksize, opt.prefill)
 
-#     # transmit the samples, and retrieve samples back from the channel
-#     try:
-#         samples_rx = channel.xmit_and_recv(mod_samples)
-#     except ZeroDivisionError:
-#         # should only happen for audio channel
-#         print "I didn't get any samples; is your microphone or speaker OFF?"
-#         sys.exit(1)
-# #################################
+    # transmit the samples, and retrieve samples back from the channel
+    try:
+        samples_rx = channel.xmit_and_recv(mod_samples)
+    except ZeroDivisionError:
+        # should only happen for audio channel
+        print "I didn't get any samples; is your microphone or speaker OFF?"
+        sys.exit(1)
+#################################
 
-#     # process the received samples
-#     # make receiver
-#     r = Receiver(fc, opt.samplerate, opt.spb)
-#     demod_samples = r.demodulate(samples_rx)
-#     one, zero, thresh = r.detect_threshold(demod_samples)
-#     barker_start = r.detect_preamble(demod_samples, thresh, one)
-#     rcdbits = r.demap_and_check(demod_samples, barker_start)
-#end comment
-    rcdbits = databits # todo remove
+    # process the received samples
+    # make receiver
+    r = Receiver(fc, opt.samplerate, opt.spb)
+    demod_samples = r.demodulate(samples_rx)
+    one, zero, thresh = r.detect_threshold(demod_samples)
+    barker_start = r.detect_preamble(demod_samples, thresh, one)
+    rcdbits = r.demap_and_check(demod_samples, barker_start)
 
     # push into sink
     sink = Sink()
