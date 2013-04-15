@@ -34,7 +34,8 @@ class Source:
     def bits_from_image(self, filename):
         img = Image.open(filename)
         img = img.convert('L')
-        bits = list(img.getdata())  # read in as pixels, need to convert to 0/1
+        bits = numpy.array(list(img.getdata()))  # read in as pixels, need to
+                                                 # convert to bits
         for num in numpy.nditer(bits, op_flags=['readwrite']):
             if num[...] != 0:
                 num[...] = 1
@@ -44,4 +45,13 @@ class Source:
     def get_header(self, payload_length, srctype): 
         # Given the payload length and the type of source 
         # (image, text, monotone), form the header
-        return header
+
+        if srctype is 'image':
+            header_type = [1, 0]
+            header_length = []
+            header_length_str = numpy.binary_repr(payload_length, width=6)
+            for bit in header_length_str:
+                header_length.append(int(bit))
+            header = header_type + header_length
+        
+        return numpy.array(header)
