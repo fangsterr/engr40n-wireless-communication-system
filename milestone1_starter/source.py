@@ -3,6 +3,7 @@ import common_srcsink as common
 import Image
 from graphs import *
 import binascii
+import numpy
 import random
 
 
@@ -31,7 +32,13 @@ class Source:
         return bits
 
     def bits_from_image(self, filename):
-        # Given an image, convert to bits
+        img = Image.open(filename)
+        img = img.convert('L')
+        bits = list(img.getdata())  # read in as pixels, need to convert to 0/1
+        for num in numpy.nditer(bits, op_flags=['readwrite']):
+            if num[...] != 0:
+                num[...] = 1
+
         return bits
 
     def get_header(self, payload_length, srctype): 
