@@ -34,8 +34,11 @@ class Transmitter:
         Sample values for bit '1', '0' should be [one], 0 respectively.
         Output should be an array of samples.
         '''
-        # fill in your implemenation
-        return samples
+        samples = []
+        for bit in numpy.nditer(databits_with_preamble):
+            for i in range(self.spb):
+                samples.append(self.one if bit == 1 else bit)
+        return return numpy.array(samples)
         
 
     def modulate(self, samples):
