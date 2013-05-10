@@ -185,4 +185,4 @@ class Receiver:
         Return the cross correlation value between preamble samples and current
         samples analyzed
         '''
-        return numpy.dot(preamble_samples, samples)
+        return (numpy.dot(preamble_samples, samples) / numpy.linalg.norm(samples))
