@@ -143,7 +143,7 @@ class Receiver:
         # Demap
         demapped_bits = []
         for bit_val in average_midpoint_values_of_samples:
-            if bit_val > ((one + thresh) / 2):
+            if bit_val > thresh:
                 demapped_bits.append(1)
             else:
                 demapped_bits.append(0)
