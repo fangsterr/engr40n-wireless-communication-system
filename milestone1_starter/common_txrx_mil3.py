@@ -12,7 +12,7 @@ def modulate(fc, samplerate, samples):
   modulated_samples = []
   index = 0
   for sample in samples:
-    modulated_sample = math.cos(2 * math.pi * ((fc * 1.0) / samplerate) * index)
+    modulated_sample = sample * math.cos(2 * math.pi * ((fc * 1.0) / samplerate) * index)
     modulated_samples.append(modulated_sample)
     index = index + 1
 
@@ -25,7 +25,7 @@ def demodulate(fc, samplerate, samples):
   demodulated_samples = []
   index = 0
   for sample in samples:
-    demodulated_sample = cmath.exp(2j * math.pi * fc * index / (samplerate * 1.0))
+    demodulated_sample = sample * cmath.exp((2j * math.pi * fc * index) / (samplerate * 1.0))
     demodulated_samples.append(demodulated_sample)
     index = index + 1
 
@@ -54,21 +54,18 @@ def lpfilter(samples_in, omega_cut):
   # compute the demodulated samples
   demod_samples = []
   index = 0
-
   for sample in samples_in:
     samples_subarray = numpy.zeros(len(unit_sample_response_array), dtype=numpy.dtype(complex))
     samples_in_len = len(samples_in)
     second_index = index + L
     array_index = 0
     while second_index >= index - L:
-      if second_index < 0 or second_index >= samples_in_len:
-        samples_subarray[array_index] = 0
-      else:
+      if not (second_index < 0 or second_index >= samples_in_len):
         samples_subarray[array_index] = samples_in[second_index]
       array_index = array_index + 1
       second_index = second_index - 1
 
-    value = numpy.dot(unit_sample_response_array, samples_subarray)
+    value = numpy.dot(samples_subarray, unit_sample_response_array)
     demod_samples.append(abs(value))
     index = index + 1
 
