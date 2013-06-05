@@ -47,7 +47,8 @@ class Receiver:
             if average_sample_val > ((one + thresh) / 2):
                 could_not_find_energy_offset = False
                 break
-            energy_offset += self.spb
+            # energy_offset += self.spb
+            energy_offset += 1
 
         if could_not_find_energy_offset:
             print '*** ERROR: Could not detect any ones (so no preamble). ***'
