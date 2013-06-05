@@ -34,12 +34,12 @@ def detect_threshold(demod_samples):
     new_center1 = 0
     for i in group1:
       new_center1 += demod_samples[i]
-    new_center1 /= len(group1)
+    new_center1 /= float(len(group1))
 
     new_center2 = 0
     for i in group2:
       new_center2 += demod_samples[i]
-    new_center2 /= len(group2)
+    new_center2 /= float(len(group2))
 
     if new_center2 == center2 and new_center1 == center1:
       have_centers_changed = False
@@ -48,12 +48,8 @@ def detect_threshold(demod_samples):
 
   # insert code to associate the higher of the two centers
   # with one and the lower with zero
-  if center1 > center2:
-    one = center1
-    zero = center2
-  else:
-    one = center2
-    zero = center1
+  one = max(center1, center2)
+  zero = min(center1, center2)
 
   print "Threshold for 1:"
   print one
