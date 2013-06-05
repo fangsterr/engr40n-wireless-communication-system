@@ -16,16 +16,44 @@ def detect_threshold(demod_samples):
         # complexity in audiocom (for the time being, anyway).
 
 	# initialization
+  demod_samples = list(demod_samples)
   center1 = min(demod_samples)
   center2 = max(demod_samples)
 
-  # insert code to implement 2-means clustering
+  have_centers_changed = True
+  while have_centers_changed:
+    group1 = []
+    group2 = []
+    for i in range(len(demod_samples)):
+      sample = demod_samples[i]
+      if (sample-center1)**2 < (sample-center2)**2:
+        group1.append(i)
+      else:
+        group2.append(i)
+
+    new_center1 = 0
+    for i in group1:
+      new_center1 += demod_samples[i]
+    new_center1 /= len(group1)
+
+    new_center2 = 0
+    for i in group2:
+      new_center2 += demod_samples[i]
+    new_center2 /= len(group2)
+
+    if new_center2 == center2 and new_center1 == center1:
+      have_centers_changed = False
+    center1 = new_center1
+    center2 = new_center2
 
   # insert code to associate the higher of the two centers
   # with one and the lower with zero
-
-  one = 1
-  zero = 0
+  if center1 > center2:
+    one = center1
+    zero = center2
+  else:
+    one = center2
+    zero = center1
 
   print "Threshold for 1:"
   print one
