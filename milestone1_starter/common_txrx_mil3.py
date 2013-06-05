@@ -33,7 +33,7 @@ def demodulate(fc, samplerate, samples):
 
   return lpfilter(demodulated_samples, omega_cut, fc, samplerate)
 
-def lpfilter(samples_in, omega_cut, fc, fs):
+def lpfilter(samples_in, omega_cut):
   '''
   A low-pass filter of frequency omega_cut.
   '''
@@ -50,13 +50,12 @@ def lpfilter(samples_in, omega_cut, fc, fs):
     elif (-1 * L) <= index <= L:
       unit_sample_response = math.sin(omega_cut * index) / (math.pi * index * 1.0)
     else:
-      unit_sample_response = 0
+      unit_sample_response = 1
 
     demod_sample = abs(sample * mod(fc, fs, index) * unit_sample_response)
     demod_samples.append(demod_sample)
     index = index + 1
 
-  print demod_samples
   return demod_samples
 
 
