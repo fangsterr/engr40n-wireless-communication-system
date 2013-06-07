@@ -80,6 +80,7 @@ def gen_lookup(cc_len):
     old_G = numpy.reshape(old_G, (k, n))
     A, identity = numpy.hsplit(old_G, [n-k])
     G = numpy.concatenate((identity, A), 1)
+    # G = numpy.reshape(G,G.size,order='F').reshape((n,k))
 
     return n, k, index, G
 
@@ -100,10 +101,12 @@ def parity_lookup(index):
     k = parameters[index][1]
 
     # Reshape G, extract A and compute H:
+    G = numpy.reshape(G, (k, n))
     A, identity = numpy.hsplit(G, [n-k])
     A_checker = numpy.transpose(A)
     identity_checker = numpy.identity(n-k, dtype=int)
     H = numpy.concatenate((A_checker, identity_checker), 1)
+    # H = numpy.reshape(H,H.size,order='F').reshape((n,H.size/n))
 
     return n, k, H
 
