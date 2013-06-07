@@ -52,7 +52,7 @@ parameters = [[3,1],[7,4],[15,11],[31,26]]
 
 
 def gen_lookup(cc_len):
-    ''' 
+    '''
     returns
     (1) n (=cc_len, codeword length)
     (2) k (length of data bit in each codeword)
@@ -74,8 +74,12 @@ def gen_lookup(cc_len):
 
     n = parameters[index][0]
     k = parameters[index][1]
-    
+
     # Reshape G:
+    old_G = generating_matrices[index]
+    old_G = numpy.reshape(old_G, (k, n))
+    A, identity = numpy.hsplit(old_G, [n-k])
+    G = numpy.concatenate((identity, A), 1)
 
     return n, k, index, G
 
@@ -90,12 +94,16 @@ def parity_lookup(index):
     The reason why this takes the index as the input while gen_lookup takes cc_len
     is, because containing index is efficient than containing n in the header.
     The decoder reads the header to pick the right parity check matrix.
-    ''' 
+    '''
     G = generating_matrices[index]
     n = parameters[index][0]
     k = parameters[index][1]
-    
+
     # Reshape G, extract A and compute H:
+    A, identity = numpy.hsplit(G, [n-k])
+    A_checker = numpy.transpose(A)
+    identity_checker = numpy.identity(n-k, dtype=int)
+    H = numpy.concatenate((A_checker, identity_checker), 1)
 
     return n, k, H
 
