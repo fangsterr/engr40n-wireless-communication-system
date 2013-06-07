@@ -187,3 +187,55 @@ class Receiver:
         samples analyzed
         '''
         return (numpy.dot(preamble_samples, samples) / numpy.linalg.norm(samples))
+
+    def decode(self, rcd_bits):
+        header = rcd_bits[:16]
+        decoded_header = hamming_decoding(header, 3)
+        header_coding_rate = decoded_header[:5]
+        header_coded_frame_length = decoded_header[6:16]
+
+        print "channel coding rate: " + header_coding_rate
+
+        return hamming_decoding(
+            rcd_bits[16:header_coded_frame_length+16],
+            header_coding_rate
+        )
+
+    def hamming_decoding(self, coded_bits, index):
+        n, k, H = parity_lookup(index)
+
+        decoded_bits = []
+
+        # break into k sized blocks
+        k_block_bit = []
+        count = 0
+        error_count = 0
+        for bit in numpy.nditer(coded_bits):
+            k_block_bit.append(bit)
+            if (count % k) == (k-1):
+                decoded_bits = numpy.dot(k_block_bit, H)
+                original_bits, syndrome = numpy.hsplit(decoded_bits, [k])
+
+                for element in syndrome:
+                    if element != 0:
+                        error_count += 1
+
+                        second_count = 0
+                        for column in H:
+                            if numpy.array_equal(column, syndrome):
+                                break
+                            second_count += 1
+
+                        if original_bits[second_count] == 0:
+                            original_bits[second_count] = 1
+                        else:
+                            original_bits[second_count] = 0
+
+                        break
+
+
+                decoded_bits.append(original_bits)
+            count += 1
+
+        print "errors corrected: " error_count
+        return numpy.array(decoded_bits)
