@@ -14,7 +14,6 @@ class DNode:
         self.zero = None
         self.value = None
         self.symbol = None  # only if leaf node
-        print "DNode"
 
 
 class Sink:
@@ -39,13 +38,18 @@ class Sink:
         # Return the received payload for comparison purposes
 
         srctype, payload_length = self.read_type_size(recd_bits[:18])
-        rcd_payload = recd_bits[18:(payload_length+18)]
+        rcd_payload = recd_bits[18:]
+        rcd_header = rcd_payload[:160]
+        rcd_payload = rcd_payload[160:160+payload_length]
+        print 'encoded_bits: ', list(rcd_payload)
         if srctype is 'text':
-            freq_map = read_stat(rcd_payload)
+            freq_map = self.read_stat(rcd_header)
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)
+            print 'payload: ', list(rcd_payload)
+            print 'len(payload): ', len(rcd_payload)
             print self.bits2text(rcd_payload)
         elif srctype is 'image':
-            freq_map = read_stat(rcd_payload)
+            freq_map = self.read_stat(rcd_header)
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)
             self.image_from_bits(rcd_payload, 'rcd-image.png')
 
@@ -92,38 +96,45 @@ class Sink:
         q = PriorityQueue()
         for symbol, freq in freq_map.iteritems():
             node = DNode()
-            node.value = freq * 1000000 + int(symbol)
+            node.value = (freq * 1000000 + int(symbol))
             node.symbol = symbol
-            q.put(node, freq)
+            q.put((node.value, node))
 
         while q.qsize() > 1:
-            node0 = q.get()
-            node1 = q.get()
+            value, node0 = q.get()
+            value, node1 = q.get()
 
             merged = DNode()
             merged.value = node0.value + node1.value
             merged.zero = node0
             merged.one = node1
 
-            q.put(merged, merged.value)
+            q.put((merged.value, merged))
 
-        huffman_tree = q.get()
+        value, huffman_tree = q.get()
 
         source_bits = []
 
         node = huffman_tree
-        for bit in encoded_bits:
+        curr_str = ""
+        i = 0
+        while i < len(encoded_bits):
+            bit = encoded_bits[i]
             next_node = node.zero if bit == 0 else node.one
 
             if next_node is None:
                 if node.symbol is None:
                     print 'wtf corrupt huffman tree'
                 else:
-                    for bit in node.symbol:
-                        source_bits.append(int(bit))
+                    for bitt in node.symbol:
+                        source_bits.append(int(bitt))
                 node = huffman_tree
+                curr_str = ""
+                i -= 1
             else:
                 node = next_node
+                curr_str += "0" if bit == 0 else "1"
+            i += 1
         return numpy.array(source_bits)
 
     def read_stat(self, header_bits):
@@ -136,11 +147,11 @@ class Sink:
             bit_string += str(bit)
             if counter == 10:
                 freq = int(bit_string, 2)
-                symbol_as_str = str(symbol)
-                while len(symbol_as_str) < 4:
-                    symbol_as_str = "0" + symbol_as_str
+                symbol_as_str = numpy.binary_repr(symbol, width=4)
                 frequency_map[symbol_as_str] = freq
                 symbol += 1
+                counter = 0
+                bit_string = ""
         
         return frequency_map
 
