@@ -217,39 +217,34 @@ class Receiver:
     def hamming_decoding(self, coded_bits, index):
         n, k, H = hamming_db.parity_lookup(index)
 
+        split_up_blocks = numpy.reshape(coded_bits, (n, -1))
+
         decoded_bits = []
-        # break into k sized blocks
-        k_block_bit = []
-        count = 0
         error_count = 0
 
-        for bit in coded_bits:
-            k_block_bit.append(int(bit))
-            if (count % n) == (n-1):
-                original_bits = k_block_bit[:k]
-                syndrome = numpy.dot(k_block_bit[k:], H)
+        for block in split_up_blocks:
+            original_bits = block[:k]
+            syndrome = numpy.dot(block[k:], H)
 
-                for element in syndrome:
-                    if element != 0:
-                        error_count += 1
+            for element in syndrome:
+                if element != 0:
+                    error_count += 1
 
-                        second_count = 0
-                        for column in H:
-                            if second_count >= k:
-                                break
-                            if numpy.array_equal(column, syndrome):
-                                if original_bits[second_count] == 0:
-                                    original_bits[second_count] = 1
-                                else:
-                                    original_bits[second_count] = 0
-                                break
-                            second_count += 1
+                    second_count = 0
+                    for column in H:
+                        if second_count >= k:
+                            break
+                        if numpy.array_equal(column, syndrome):
+                            if original_bits[second_count] == 0:
+                                original_bits[second_count] = 1
+                            else:
+                                original_bits[second_count] = 0
+                            break
+                        second_count += 1
 
-                        break
+                    break
 
-                decoded_bits = decoded_bits + original_bits
-                k_block_bit = []
-            count += 1
+            decoded_bits = decoded_bits + original_bits
 
         print "errors corrected: %d" % error_count
         return numpy.array(decoded_bits)

@@ -74,15 +74,10 @@ class Transmitter:
         coded_bits = []
 
         # break into k sized blocks
-        k_block_bit = []
-        count = 0
-        for bit in databits:
-            k_block_bit.append(int(bit))
-            if (count % k) == (k-1):
-                bits = numpy.dot(k_block_bit, G)
-                coded_bits.append(bits)
-                k_block_bit = []
-            count += 1
+        split_up_blocks = numpy.reshape(databits, (-1, k))
+        for block in split_up_blocks:
+            bits = numpy.dot(block, G)
+            coded_bits = coded_bits + bits
 
         coded_bits = numpy.array(coded_bits)
         return index, coded_bits
