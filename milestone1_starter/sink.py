@@ -95,6 +95,8 @@ class Sink:
         freq_map = stat
         q = PriorityQueue()
         for symbol, freq in freq_map.iteritems():
+            if freq == 0:
+                continue
             node = DNode()
             node.value = (freq * 1000000 + int(symbol))
             node.symbol = symbol

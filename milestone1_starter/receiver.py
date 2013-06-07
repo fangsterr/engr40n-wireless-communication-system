@@ -237,5 +237,5 @@ class Receiver:
                 decoded_bits.append(original_bits)
             count += 1
 
-        print "errors corrected: " error_count
+        # print "errors corrected: " error_count
         return numpy.array(decoded_bits)
