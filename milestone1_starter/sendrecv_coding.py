@@ -100,46 +100,49 @@ if __name__ == '__main__':
     src = Source(opt.monotone, opt.fname)
     src_payload, databits = src.process()  
 
-    # instantiate and run the transmitter block
-    xmitter = Transmitter(fc, opt.samplerate, opt.one, opt.spb, opt.silence, opt.cc_len)
-    coded_bits = xmitter.encode(databits)
-    coded_bits_with_preamble = xmitter.add_preamble(coded_bits)
-    samples = xmitter.bits_to_samples(coded_bits_with_preamble)
-    mod_samples = xmitter.modulate(samples)
+#     # instantiate and run the transmitter block
+#     xmitter = Transmitter(fc, opt.samplerate, opt.one, opt.spb, opt.silence, opt.cc_len)
+#     coded_bits = xmitter.encode(databits)
+#     coded_bits_with_preamble = xmitter.add_preamble(coded_bits)
+#     samples = xmitter.bits_to_samples(coded_bits_with_preamble)
+#     mod_samples = xmitter.modulate(samples)
 
-####################################    
-    # create channel instance
-    if opt.bypass:
-        h = [float(x) for x in opt.h.split(' ')]
-        channel = bch.BypassChannel(opt.noise, opt.lag, h)
-    else:
-        channel = ach.AudioChannel(opt.samplerate, opt.chunksize, opt.prefill)
+# ####################################    
+#     # create channel instance
+#     if opt.bypass:
+#         h = [float(x) for x in opt.h.split(' ')]
+#         channel = bch.BypassChannel(opt.noise, opt.lag, h)
+#     else:
+#         channel = ach.AudioChannel(opt.samplerate, opt.chunksize, opt.prefill)
         
-    # transmit the samples, and retrieve samples back from the channel
-    try:
-        samples_rx = channel.xmit_and_recv(mod_samples)
-    except ZeroDivisionError:
-        # should only happen for audio channel
-        print "I didn't get any samples; is your microphone or speaker OFF?"
-        sys.exit(1)
-#################################
+#     # transmit the samples, and retrieve samples back from the channel
+#     try:
+#         samples_rx = channel.xmit_and_recv(mod_samples)
+#     except ZeroDivisionError:
+#         # should only happen for audio channel
+#         print "I didn't get any samples; is your microphone or speaker OFF?"
+#         sys.exit(1)
+# #################################
 
-    # process the received samples
-    # make receiver
-    r = Receiver(fc, opt.samplerate, opt.spb)
-    demod_samples = r.demodulate(samples_rx)
-    one, zero, thresh = r.detect_threshold(demod_samples)
-    barker_start = r.detect_preamble(demod_samples, thresh, one)
-    rcdbits = r.demap_and_check(demod_samples, barker_start)
-    decoded_bits = r.decode(rcdbits)
+#     # process the received samples
+#     # make receiver
+#     r = Receiver(fc, opt.samplerate, opt.spb)
+#     demod_samples = r.demodulate(samples_rx)
+#     one, zero, thresh = r.detect_threshold(demod_samples)
+#     barker_start = r.detect_preamble(demod_samples, thresh, one)
+#     rcdbits = r.demap_and_check(demod_samples, barker_start)
+#     decoded_bits = r.decode(rcdbits)
 
     # push into sink
     sink = Sink()
+    decoded_bits = databits # todo comment out
     rcd_payload = sink.process(decoded_bits)
     
     if len(rcd_payload) > 0:
         hd, err = common_srcsink.hamming(decoded_bits, databits)
         print 'Hamming distance for payload at frequency', fc,'Hz:', hd, 'BER:', err
+        hd, err = common_srcsink.hamming(src_payload, rcd_payload)
+        print 'hamming distance at frequency', fc, 'hz: ', hd, 'BER:', err
     else:
         print 'Could not recover transmission.'
 

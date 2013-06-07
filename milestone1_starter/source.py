@@ -14,7 +14,6 @@ class ENode:
         self.zero = None
         self.value = None
         self.symbol = None  # only if leaf node
-        print "ENode"
 
 class Source:
     def __init__(self, monotone, filename=None):
@@ -28,15 +27,23 @@ class Source:
         if self.fname is not None:
             if self.fname.endswith('.png') or self.fname.endswith('.PNG'):
                 payload = self.bits_from_image(self.fname)
+                freq_map, encoded_bits = self.huffman_encode(payload)
                 databits = numpy.append(
-                    self.get_header(len(payload), 'image'),
-                    payload
+                    self.get_header(len(encoded_bits), 'image', freq_map),
+                    encoded_bits
                 )
             else:
                 payload = self.text2bits(self.fname)
+                freq_map, encoded_bits = self.huffman_encode(payload)
+                print 'payload: ', list(payload)
+                print 'len(payload): ', len(payload)
+                print 'encoded_bits: ', list(encoded_bits)
+                # print len(encoded_bits)
+                # header = self.get_header(len(encoded_bits), 'text', freq_map)
+                # print 'len(header)', header[18:], ' ', len(header[18:])
                 databits = numpy.append(
-                    self.get_header(len(payload), 'text'),
-                    payload
+                    self.get_header(len(encoded_bits), 'text', freq_map),
+                    encoded_bits
                 )
         else:
             payload = numpy.array([1,1,1,1,1,1])
@@ -99,8 +106,8 @@ class Source:
             code_map[node.symbol] = prefix
             return
 
-        populate_code_map(self, node.zero, code_map, prefix+"0")
-        populate_code_map(self, node.one, code_map, prefix+"1")
+        self.populate_code_map(node.zero, code_map, prefix+"0")
+        self.populate_code_map(node.one, code_map, prefix+"1")
 
 
     def huffman_encode(self, src_bits):
@@ -117,26 +124,27 @@ class Source:
         q = PriorityQueue()
         for symbol, freq in frequency_map.iteritems():
             node = ENode()
-            node.value = freq * 1000000 + int(symbol)
+            node.value = (freq * 1000000 + int(symbol))
             node.symbol = symbol
-            q.put(node, freq)
+            q.put((node.value, node))
 
         # TODO deal with ties
         while q.qsize() > 1:
-            node0 = q.get()
-            node1 = q.get()
-
+            value, node0 = q.get()
+            value, node1 = q.get()
             merged = ENode()
             merged.value = node1.value + node0.value
             merged.one = node1
             merged.zero = node0
 
-            q.put(merged, merged.value)
+            q.put((merged.value, merged))
 
-        huffman_tree = q.get()
+        value, huffman_tree = q.get()
 
         code_map = {}
-        populate_code_map(self, huffman_tree, code_map)
+        self.populate_code_map(huffman_tree, code_map)
+        print "code_map ", code_map
+        print 'freq_map', frequency_map
 
         huffman_encoded_bits = []
         current_symbol = ""
@@ -176,10 +184,8 @@ class Source:
         if srctype is 'image' or srctype is 'text':
             # huffman dat shiet
             i = 0
-            while i <= 1111:
-                symbol = str(i)
-                while len(symbol) < 4:
-                    symbol = "0" + symbol
+            while i <= 15:
+                symbol = numpy.binary_repr(i, width=4)
                 freq_str = numpy.binary_repr(data_statistics[symbol], width=10)
                 freq_arr = []
                 for bit in freq_str:
