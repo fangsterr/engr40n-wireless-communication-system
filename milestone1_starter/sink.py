@@ -41,13 +41,13 @@ class Sink:
         rcd_payload = recd_bits[18:]
         rcd_header = rcd_payload[:160]
         rcd_payload = rcd_payload[160:160+payload_length]
-        print 'encoded_bits: ', list(rcd_payload)
+        # print 'encoded_bits: ', list(rcd_payload)
         if srctype is 'text':
             freq_map = self.read_stat(rcd_header)
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)
-            print 'payload: ', list(rcd_payload)
-            print 'len(payload): ', len(rcd_payload)
-            print self.bits2text(rcd_payload)
+            # print 'payload: ', list(rcd_payload)
+            # print 'len(payload): ', len(rcd_payload)
+            # print self.bits2text(rcd_payload)
         elif srctype is 'image':
             freq_map = self.read_stat(rcd_header)
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)
@@ -154,7 +154,7 @@ class Sink:
                 symbol += 1
                 counter = 0
                 bit_string = ""
-        
+
         return frequency_map
 
 

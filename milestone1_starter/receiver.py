@@ -5,6 +5,7 @@ import scipy.cluster.vq
 import common_txrx as common
 from numpy import linalg as LA
 import receiver_mil3
+import hamming_db
 
 class Receiver:
     def __init__(self, carrier_freq, samplerate, spb):
@@ -189,32 +190,44 @@ class Receiver:
         return (numpy.dot(preamble_samples, samples) / numpy.linalg.norm(samples))
 
     def decode(self, rcd_bits):
-        header = rcd_bits[:16]
-        decoded_header = hamming_decoding(header, 3)
+        header = rcd_bits[:16*3]
+        decoded_header = self.hamming_decoding(header, 0)
         header_coding_rate = decoded_header[:5]
-        header_coded_frame_length = decoded_header[6:16]
 
-        print "channel coding rate: " + header_coding_rate
+        bit_string = ""
+        for bit in header_coding_rate:
+            single_bit_string = '%d' % bit
+            bit_string += single_bit_string
+        header_coding_rate = int(bit_string, 2)
 
-        return hamming_decoding(
-            rcd_bits[16:header_coded_frame_length+16],
+        bit_string = ""
+        header_coded_frame_length = decoded_header[5:16]
+        for bit in header_coded_frame_length:
+            single_bit_string = '%d' % bit
+            bit_string += single_bit_string
+        header_coded_frame_length = int(bit_string, 2)
+
+        print "channel coding rate: %d" % header_coding_rate
+
+        return self.hamming_decoding(
+            rcd_bits[16*3:header_coded_frame_length+16*3],
             header_coding_rate
         )
 
     def hamming_decoding(self, coded_bits, index):
-        n, k, H = parity_lookup(index)
+        n, k, H = hamming_db.parity_lookup(index)
 
         decoded_bits = []
-
         # break into k sized blocks
         k_block_bit = []
         count = 0
         error_count = 0
-        for bit in numpy.nditer(coded_bits):
-            k_block_bit.append(bit)
-            if (count % k) == (k-1):
-                decoded_bits = numpy.dot(k_block_bit, H)
-                original_bits, syndrome = numpy.hsplit(decoded_bits, [k])
+
+        for bit in coded_bits:
+            k_block_bit.append(int(bit))
+            if (count % n) == (n-1):
+                original_bits = k_block_bit[:k]
+                syndrome = numpy.dot(k_block_bit[k:], H)
 
                 for element in syndrome:
                     if element != 0:
@@ -222,20 +235,21 @@ class Receiver:
 
                         second_count = 0
                         for column in H:
+                            if second_count >= k:
+                                break
                             if numpy.array_equal(column, syndrome):
+                                if original_bits[second_count] == 0:
+                                    original_bits[second_count] = 1
+                                else:
+                                    original_bits[second_count] = 0
                                 break
                             second_count += 1
 
-                        if original_bits[second_count] == 0:
-                            original_bits[second_count] = 1
-                        else:
-                            original_bits[second_count] = 0
-
                         break
 
-
-                decoded_bits.append(original_bits)
+                decoded_bits = decoded_bits + original_bits
+                k_block_bit = []
             count += 1
 
-        # print "errors corrected: " error_count
+        print "errors corrected: %d" % error_count
         return numpy.array(decoded_bits)

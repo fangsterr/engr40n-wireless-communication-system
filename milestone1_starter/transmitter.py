@@ -1,6 +1,7 @@
 import math
 import common_txrx as common
 import numpy
+import hamming_db
 
 class Transmitter:
     def __init__(self, carrier_freq, samplerate, one, spb, silence, cc_len):
@@ -50,12 +51,12 @@ class Transmitter:
 
 
     def encode(self, databits):
-        index, coded_data = hamming_encoding(databits)
+        index, coded_data = self.hamming_encoding(databits, False)
 
         header_coding_rate = numpy.binary_repr(index, width=5)
         header_coded_frame_length = numpy.binary_repr(len(coded_data) + 16, width=11)
         coded_header = header_coding_rate + header_coded_frame_length
-        index, coded_header = hamming_encoding(coded_header, True)
+        index, coded_header = self.hamming_encoding(coded_header, True)
 
         return numpy.append(coded_header, coded_data)
 
@@ -64,22 +65,23 @@ class Transmitter:
         if is_header:
             cc_len = 3
 
-        n, k, index, G = gen_lookup(cc_len)
+        n, k, index, G = hamming_db.gen_lookup(cc_len)
 
         offset = len(databits) % k
         for bit in range(offset):
-            databits.append(0)
+            numpy.append(databits, 0)
 
         coded_bits = []
 
         # break into k sized blocks
         k_block_bit = []
         count = 0
-        for bit in numpy.nditer(databits):
-            k_block_bit.append(bit)
+        for bit in databits:
+            k_block_bit.append(int(bit))
             if (count % k) == (k-1):
                 bits = numpy.dot(k_block_bit, G)
                 coded_bits.append(bits)
+                k_block_bit = []
             count += 1
 
         coded_bits = numpy.array(coded_bits)
