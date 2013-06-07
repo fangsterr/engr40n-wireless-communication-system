@@ -149,14 +149,14 @@ class Receiver:
             else:
                 demapped_bits.append(0)
 
-        # Check preamble bits
-        index = 0
-        for bit in preamble_bits:
-            if not bit == demapped_bits[index]:
-                print "*** ERROR ***\n"
-                print "Preamble bits do not match.\n"
-                sys.exit(1)
-            index += 1
+        # Check preamble bits (commented out for channel coding)
+        # index = 0
+        # for bit in preamble_bits:
+        #     if not bit == demapped_bits[index]:
+        #         print "*** ERROR ***\n"
+        #         print "Preamble bits do not match.\n"
+        #         sys.exit(1)
+        #     index += 1
 
         # It's all good
         data_bits = numpy.array(demapped_bits[len(preamble_bits):])

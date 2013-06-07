@@ -5,8 +5,16 @@ from graphs import *
 import binascii
 import numpy
 import random
+from Queue import PriorityQueue
+import collections
 
-
+class ENode:
+    def __init__(self):
+        self.one = None
+        self.zero = None
+        self.value = None
+        self.symbol = None  # only if leaf node
+        print "ENode"
 
 class Source:
     def __init__(self, monotone, filename=None):
@@ -62,6 +70,7 @@ class Source:
 
         return bits
 
+
     def bits_from_image(self, filename):
         img = Image.open(filename)
         img = img.convert('L')
@@ -81,7 +90,71 @@ class Source:
 
         return bits
 
-    def get_header(self, payload_length, srctype):
+
+    def populate_code_map(self, node, code_map, prefix=""):
+        if node is None:
+            return
+
+        if node.symbol is not None:
+            code_map[node.symbol] = prefix
+            return
+
+        populate_code_map(self, node.zero, code_map, prefix+"0")
+        populate_code_map(self, node.one, code_map, prefix+"1")
+
+
+    def huffman_encode(self, src_bits):
+        frequency_map = collections.defaultdict(lambda: 0)
+        src_bits = list(src_bits)
+
+        current_symbol = ""
+        for i in range(len(src_bits)):
+            current_symbol += str(src_bits[i])
+            if len(current_symbol) == 4:
+                frequency_map[current_symbol] += 1
+                current_symbol = ""
+
+        q = PriorityQueue()
+        for symbol, freq in frequency_map.iteritems():
+            node = ENode()
+            node.value = freq * 1000000 + int(symbol)
+            node.symbol = symbol
+            q.put(node, freq)
+
+        # TODO deal with ties
+        while q.qsize() > 1:
+            node0 = q.get()
+            node1 = q.get()
+
+            merged = ENode()
+            merged.value = node1.value + node0.value
+            merged.one = node1
+            merged.zero = node0
+
+            q.put(merged, merged.value)
+
+        huffman_tree = q.get()
+
+        code_map = {}
+        populate_code_map(self, huffman_tree, code_map)
+
+        huffman_encoded_bits = []
+        current_symbol = ""
+        for i in range(len(src_bits)):
+            current_symbol += str(src_bits[i])
+            if len(current_symbol) == 4:
+                code = code_map[current_symbol]
+                for bit in code:
+                    huffman_encoded_bits.append(int(bit))
+                current_symbol = ""
+        huffman_encoded_bits = numpy.array(huffman_encoded_bits)
+        return (frequency_map, huffman_encoded_bits)
+
+
+
+
+
+    def get_header(self, data_length, srctype, data_statistics=None):
         # Given the payload length and the type of source
         # (image, text, monotone), form the header
 
@@ -95,9 +168,24 @@ class Source:
 
         # Add length
         header_length = []
-        header_length_str = numpy.binary_repr(payload_length, width=14)
+        header_length_str = numpy.binary_repr(data_length, width=16)
         for bit in header_length_str:
             header_length.append(int(bit))
         header = header_type + header_length
+
+        if srctype is 'image' or srctype is 'text':
+            # huffman dat shiet
+            i = 0
+            while i <= 1111:
+                symbol = str(i)
+                while len(symbol) < 4:
+                    symbol = "0" + symbol
+                freq_str = numpy.binary_repr(data_statistics[symbol], width=10)
+                freq_arr = []
+                for bit in freq_str:
+                    freq_arr.append(int(bit))
+
+                header = header + freq_arr
+                i += 1
 
         return numpy.array(header)
