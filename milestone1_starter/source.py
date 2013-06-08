@@ -35,9 +35,9 @@ class Source:
             else:
                 payload = self.text2bits(self.fname)
                 freq_map, encoded_bits = self.huffman_encode(payload)
-                print 'payload: ', list(payload)
-                print 'len(payload): ', len(payload)
-                print 'encoded_bits: ', list(encoded_bits)
+                # print 'payload: ', list(payload)
+                # print 'len(payload): ', len(payload)
+                # print 'encoded_bits: ', list(encoded_bits)
                 # print len(encoded_bits)
                 # header = self.get_header(len(encoded_bits), 'text', freq_map)
                 # print 'len(header)', header[18:], ' ', len(header[18:])
@@ -143,8 +143,8 @@ class Source:
 
         code_map = {}
         self.populate_code_map(huffman_tree, code_map)
-        print "code_map ", code_map
-        print 'freq_map', frequency_map
+        # print "code_map ", code_map
+        # print 'freq_map', frequency_map
 
         huffman_encoded_bits = []
         current_symbol = ""

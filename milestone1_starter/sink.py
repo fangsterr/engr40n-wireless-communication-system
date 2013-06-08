@@ -47,7 +47,7 @@ class Sink:
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)
             # print 'payload: ', list(rcd_payload)
             # print 'len(payload): ', len(rcd_payload)
-            # print self.bits2text(rcd_payload)
+            print self.bits2text(rcd_payload)
         elif srctype is 'image':
             freq_map = self.read_stat(rcd_header)
             rcd_payload = self.huffman_decode(freq_map, rcd_payload)

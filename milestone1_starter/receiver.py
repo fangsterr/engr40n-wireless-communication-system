@@ -190,6 +190,8 @@ class Receiver:
         return (numpy.dot(preamble_samples, samples) / numpy.linalg.norm(samples))
 
     def decode(self, rcd_bits):
+        return rcd_bits
+
         header = rcd_bits[:16*3]
         decoded_header = self.hamming_decoding(header, 0)
         header_coding_rate = decoded_header[:5]
@@ -208,43 +210,53 @@ class Receiver:
         header_coded_frame_length = int(bit_string, 2)
 
         print "channel coding rate: %d" % header_coding_rate
-
-        return self.hamming_decoding(
-            rcd_bits[16*3:header_coded_frame_length+16*3],
+        import pdb; pdb.set_trace()
+        decoded_bits = self.hamming_decoding(
+            rcd_bits[16*3:header_coded_frame_length],
             header_coding_rate
         )
+        import pdb; pdb.set_trace()
+        return decoded_bits
 
     def hamming_decoding(self, coded_bits, index):
         n, k, H = hamming_db.parity_lookup(index)
 
-        split_up_blocks = numpy.reshape(coded_bits, (n, -1))
+        split_up_blocks = numpy.reshape(coded_bits, (-1, n))
 
         decoded_bits = []
         error_count = 0
 
+        reshaped_H = numpy.reshape(H,H.size,order='F').reshape((n,H.size/n))
+        import pdb; pdb.set_trace()
         for block in split_up_blocks:
             original_bits = block[:k]
-            syndrome = numpy.dot(block[k:], H)
+            syndrome = numpy.dot(H, block)
+
+            for index in range(len(syndrome)):
+                if syndrome[index] % 2 == 0:
+                    syndrome[index] = 0
+                else:
+                    syndrome[index] = 1
 
             for element in syndrome:
                 if element != 0:
                     error_count += 1
 
                     second_count = 0
-                    for column in H:
+                    for column in reshaped_H:
                         if second_count >= k:
                             break
                         if numpy.array_equal(column, syndrome):
-                            if original_bits[second_count] == 0:
-                                original_bits[second_count] = 1
+                            if block[second_count] == 0:
+                                block[second_count] = 1
                             else:
-                                original_bits[second_count] = 0
+                                block[second_count] = 0
                             break
                         second_count += 1
-
+                    original_bits = block[:k]
                     break
 
-            decoded_bits = decoded_bits + original_bits
+            decoded_bits = numpy.append(decoded_bits, original_bits)
 
         print "errors corrected: %d" % error_count
         return numpy.array(decoded_bits)

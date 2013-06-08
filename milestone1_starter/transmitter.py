@@ -51,13 +51,23 @@ class Transmitter:
 
 
     def encode(self, databits):
+        return databits
+
         index, coded_data = self.hamming_encoding(databits, False)
 
         header_coding_rate = numpy.binary_repr(index, width=5)
-        header_coded_frame_length = numpy.binary_repr(len(coded_data) + 16, width=11)
-        coded_header = header_coding_rate + header_coded_frame_length
-        index, coded_header = self.hamming_encoding(coded_header, True)
+        header_coded_frame_length = numpy.binary_repr(len(coded_data) + 16*3, width=11)
 
+        coded_header = []
+        for bit in header_coding_rate:
+            coded_header.append(int(bit))
+        for bit in header_coded_frame_length:
+            coded_header.append(int(bit))
+
+        coded_header = numpy.array(coded_header)
+
+        index, coded_header = self.hamming_encoding(coded_header, True)
+        import pdb; pdb.set_trace()
         return numpy.append(coded_header, coded_data)
 
     def hamming_encoding(self, databits, is_header):
@@ -67,9 +77,9 @@ class Transmitter:
 
         n, k, index, G = hamming_db.gen_lookup(cc_len)
 
-        offset = len(databits) % k
+        offset = k - (len(databits) % k)
         for bit in range(offset):
-            numpy.append(databits, 0)
+            databits = numpy.append(databits, 0)
 
         coded_bits = []
 
@@ -77,7 +87,12 @@ class Transmitter:
         split_up_blocks = numpy.reshape(databits, (-1, k))
         for block in split_up_blocks:
             bits = numpy.dot(block, G)
-            coded_bits = coded_bits + bits
+            for i in range(len(bits)):
+                if bits[i] % 2 == 0:
+                    bits[i] = 0
+                else:
+                    bits[i] = 1
+            coded_bits = numpy.append(coded_bits, bits)
 
         coded_bits = numpy.array(coded_bits)
         return index, coded_bits
