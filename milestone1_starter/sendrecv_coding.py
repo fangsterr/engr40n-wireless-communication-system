@@ -135,14 +135,11 @@ if __name__ == '__main__':
 
     # push into sink
     sink = Sink()
-    # decoded_bits = databits # todo comment out
     rcd_payload = sink.process(decoded_bits)
 
     if len(rcd_payload) > 0:
         hd, err = common_srcsink.hamming(decoded_bits, databits)
         print 'Hamming distance for payload at frequency', fc,'Hz:', hd, 'BER:', err
-        hd, err = common_srcsink.hamming(src_payload, rcd_payload)
-        print 'hamming distance at frequency', fc, 'hz: ', hd, 'BER:', err
     else:
         print 'Could not recover transmission.'
 

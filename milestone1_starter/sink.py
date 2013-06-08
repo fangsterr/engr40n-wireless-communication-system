@@ -140,6 +140,8 @@ class Sink:
         return numpy.array(source_bits)
 
     def read_stat(self, header_bits):
+        # import pdb; pdb.set_trace()
+
         frequency_map = {}
         counter = 0
         bit_string = ""

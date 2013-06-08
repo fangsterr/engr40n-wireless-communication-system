@@ -51,7 +51,7 @@ class Transmitter:
 
 
     def encode(self, databits):
-        return databits
+        # return databits
 
         index, coded_data = self.hamming_encoding(databits, False)
 
@@ -64,20 +64,27 @@ class Transmitter:
         for bit in header_coded_frame_length:
             coded_header.append(int(bit))
 
+        # import pdb; pdb.set_trace()
+
         coded_header = numpy.array(coded_header)
 
         index, coded_header = self.hamming_encoding(coded_header, True)
-        import pdb; pdb.set_trace()
-        return numpy.append(coded_header, coded_data)
+        # import pdb; pdb.set_trace()
+        coded_bits = numpy.append(coded_header, coded_data)
+        return coded_bits
 
     def hamming_encoding(self, databits, is_header):
         cc_len = self.cc_len
         if is_header:
             cc_len = 3
 
+        # import pdb; pdb.set_trace()
+
         n, k, index, G = hamming_db.gen_lookup(cc_len)
 
-        offset = k - (len(databits) % k)
+        offset = (len(databits) % k)
+        if offset != 0:
+            offset = k - offset
         for bit in range(offset):
             databits = numpy.append(databits, 0)
 

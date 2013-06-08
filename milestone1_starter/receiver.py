@@ -190,8 +190,6 @@ class Receiver:
         return (numpy.dot(preamble_samples, samples) / numpy.linalg.norm(samples))
 
     def decode(self, rcd_bits):
-        return rcd_bits
-
         header = rcd_bits[:16*3]
         decoded_header = self.hamming_decoding(header, 0)
         header_coding_rate = decoded_header[:5]
@@ -210,12 +208,13 @@ class Receiver:
         header_coded_frame_length = int(bit_string, 2)
 
         print "channel coding rate: %d" % header_coding_rate
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         decoded_bits = self.hamming_decoding(
             rcd_bits[16*3:header_coded_frame_length],
             header_coding_rate
         )
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
+
         return decoded_bits
 
     def hamming_decoding(self, coded_bits, index):
@@ -227,7 +226,7 @@ class Receiver:
         error_count = 0
 
         reshaped_H = numpy.reshape(H,H.size,order='F').reshape((n,H.size/n))
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         for block in split_up_blocks:
             original_bits = block[:k]
             syndrome = numpy.dot(H, block)
@@ -259,4 +258,4 @@ class Receiver:
             decoded_bits = numpy.append(decoded_bits, original_bits)
 
         print "errors corrected: %d" % error_count
-        return numpy.array(decoded_bits)
+        return numpy.array(decoded_bits, dtype=int)
