@@ -56,7 +56,7 @@ class Transmitter:
         index, coded_data = self.hamming_encoding(databits, False)
 
         header_coding_rate = numpy.binary_repr(index, width=5)
-        header_coded_frame_length = numpy.binary_repr(len(coded_data) + 16*3, width=11)
+        header_coded_frame_length = numpy.binary_repr(len(coded_data) + 32*3, width=27)
 
         coded_header = []
         for bit in header_coding_rate:
@@ -64,12 +64,9 @@ class Transmitter:
         for bit in header_coded_frame_length:
             coded_header.append(int(bit))
 
-        # import pdb; pdb.set_trace()
-
         coded_header = numpy.array(coded_header)
 
         index, coded_header = self.hamming_encoding(coded_header, True)
-        # import pdb; pdb.set_trace()
         coded_bits = numpy.append(coded_header, coded_data)
         return coded_bits
 
@@ -77,8 +74,6 @@ class Transmitter:
         cc_len = self.cc_len
         if is_header:
             cc_len = 3
-
-        # import pdb; pdb.set_trace()
 
         n, k, index, G = hamming_db.gen_lookup(cc_len)
 
